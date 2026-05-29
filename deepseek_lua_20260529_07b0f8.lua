@@ -1,134 +1,119 @@
--- Универсальный телепорт через портал
--- Сначала Teleport1, потом выбранная арена
+-- Универсальный телепорт через портал Slap Battles v2
+-- GitHub: MrErkin/teleport-slap-battels
 local plr = game.Players.LocalPlayer
 
--- ===== GUI =====
-local gui = Instance.new("ScreenGui", plr.PlayerGui)
-local f = Instance.new("Frame", gui)
-f.Size = UDim2.new(0, 200, 0, 0)
-f.Position = UDim2.new(0.5, -100, 0, 50)
-f.BackgroundColor3 = Color3.fromRGB(25,25,25)
-f.Active = true
-f.Draggable = true
+-- Функция создания GUI (вызывается при старте и после смерти)
+local function createGUI()
+    -- Удаляем старый GUI если есть
+    if plr.PlayerGui:FindFirstChild("TeleportGUI") then
+        plr.PlayerGui.TeleportGUI:Destroy()
+    end
 
-local title = Instance.new("TextLabel", f)
-title.Size = UDim2.new(1,0,0,25)
-title.Text = "ТЕЛЕПОРТ"
-title.BackgroundColor3 = Color3.fromRGB(35,35,35)
-title.TextColor3 = Color3.fromRGB(255,255,255)
-title.Font = Enum.Font.SourceSansBold
-title.TextSize = 13
+    local gui = Instance.new("ScreenGui", plr.PlayerGui)
+    gui.Name = "TeleportGUI"
+    local f = Instance.new("Frame", gui)
+    f.Size = UDim2.new(0, 200, 0, 300)
+    f.Position = UDim2.new(0.5, -100, 0, 50)
+    f.BackgroundColor3 = Color3.fromRGB(25,25,25)
+    f.Active = true
+    f.Draggable = true
 
--- Список локаций
-local locations = {
-    {name = "Moai", path = workspace.Arena:FindFirstChild("island4")},
-    {name = "Default", path = workspace.Arena:FindFirstChild("island1")},
-    {name = "Slap", path = workspace.Arena:FindFirstChild("island2")},
-    {name = "Barzil", path = workspace.Arena:FindFirstChild("island3")},
-}
+    local title = Instance.new("TextLabel", f)
+    title.Size = UDim2.new(1,0,0,25)
+    title.Text = "🌴 TELEPORT 🌴"
+    title.BackgroundColor3 = Color3.fromRGB(35,35,35)
+    title.TextColor3 = Color3.fromRGB(255,255,255)
+    title.Font = Enum.Font.SourceSansBold
+    title.TextSize = 13
 
-local yOffset = 30
-local btnCount = 0
+    -- Острова
+    local islands = {
+        {name = "🏝️ Default", path = "workspace.Arena.island1"},
+        {name = "👋 Slap", path = "workspace.Arena.island2"},
+        {name = "🇧🇷 Barzil", path = "workspace.Arena.island3"},
+        {name = "🗿 Moai", path = "workspace.Arena.island4"},
+        {name = "🚂 Train", path = "workspace.Arena.island5"},
+        {name = "💀 Куб смерти", path = "workspace.Arena.island3"},
+        {name = "🍏 Slapple Island", path = "workspace.Arena.island4.Grass"},
+    }
 
-for _, loc in pairs(locations) do
-    if loc.path then
+    local y = 30
+    for _, isl in pairs(islands) do
         local btn = Instance.new("TextButton", f)
-        btn.Size = UDim2.new(0.8, 0, 0, 28)
-        btn.Position = UDim2.new(0.1, 0, 0, yOffset)
-        btn.Text = loc.name
+        btn.Size = UDim2.new(0.85,0,0,28)
+        btn.Position = UDim2.new(0.075,0,0,y)
+        btn.Text = isl.name
         btn.BackgroundColor3 = Color3.fromRGB(45,45,45)
         btn.TextColor3 = Color3.fromRGB(255,255,255)
         btn.Font = Enum.Font.SourceSans
         btn.TextSize = 12
-        
         btn.MouseButton1Click:Connect(function()
-            teleportTo(loc.path)
+            teleportTo(isl.path)
         end)
-        
-        yOffset += 32
-        btnCount += 1
+        y += 32
     end
+
+    -- Статус
+    local status = Instance.new("TextLabel", f)
+    status.Size = UDim2.new(1,0,0,15)
+    status.Position = UDim2.new(0,0,0,y)
+    status.Text = ""
+    status.TextColor3 = Color3.fromRGB(150,150,150)
+    status.BackgroundTransparency = 1
+    status.Font = Enum.Font.SourceSans
+    status.TextSize = 10
+    status.Name = "StatusLabel"
+
+    f.Size = UDim2.new(0,200,0,y+20)
 end
 
--- Добавляем поле для своего пути
-local customLabel = Instance.new("TextLabel", f)
-customLabel.Size = UDim2.new(1,0,0,18)
-customLabel.Position = UDim2.new(0,0,0,yOffset)
-customLabel.Text = "Свой путь:"
-customLabel.TextColor3 = Color3.fromRGB(180,180,180)
-customLabel.BackgroundTransparency = 1
-customLabel.Font = Enum.Font.SourceSans
-customLabel.TextSize = 11
-yOffset += 20
-
-local customBox = Instance.new("TextBox", f)
-customBox.Size = UDim2.new(0.8,0,0,25)
-customBox.Position = UDim2.new(0.1,0,0,yOffset)
-customBox.PlaceholderText = "Workspace.Arena.island4"
-customBox.BackgroundColor3 = Color3.fromRGB(40,40,40)
-customBox.TextColor3 = Color3.fromRGB(255,255,255)
-customBox.Font = Enum.Font.SourceSans
-customBox.TextSize = 11
-yOffset += 30
-
-local customBtn = Instance.new("TextButton", f)
-customBtn.Size = UDim2.new(0.8,0,0,28)
-customBtn.Position = UDim2.new(0.1,0,0,yOffset)
-customBtn.Text = "ТП по пути"
-customBtn.BackgroundColor3 = Color3.fromRGB(45,45,45)
-customBtn.TextColor3 = Color3.fromRGB(255,255,255)
-customBtn.Font = Enum.Font.SourceSans
-customBtn.TextSize = 12
-customBtn.MouseButton1Click:Connect(function()
-    local path = customBox.Text
-    local success, obj = pcall(function()
-        return loadstring("return " .. path)()
-    end)
-    if success and obj then
-        teleportTo(obj)
-    else
-        print("Неверный путь")
-    end
-end)
-yOffset += 32
-
--- Статус
-local statusLabel = Instance.new("TextLabel", f)
-statusLabel.Size = UDim2.new(1,0,0,15)
-statusLabel.Position = UDim2.new(0,0,0,yOffset)
-statusLabel.Text = ""
-statusLabel.TextColor3 = Color3.fromRGB(150,150,150)
-statusLabel.BackgroundTransparency = 1
-statusLabel.Font = Enum.Font.SourceSans
-statusLabel.TextSize = 10
-yOffset += 18
-
--- Обновляем размер фрейма
-f.Size = UDim2.new(0, 200, 0, yOffset + 5)
-
--- ===== ФУНКЦИЯ ТЕЛЕПОРТА =====
-function teleportTo(target)
+-- ===== ТЕЛЕПОРТ =====
+function teleportTo(path)
     local char = plr.Character or plr.CharacterAdded:Wait()
     local hrp = char:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
     
-    -- Шаг 1: Телепорт к порталу
-    statusLabel.Text = "Иду к порталу..."
-    local portal = workspace.Lobby:FindFirstChild("Teleport1")
-    if portal then
-        hrp.CFrame = portal.CFrame * CFrame.new(0, 0, -5)
-        task.wait(0.8)
-        hrp.CFrame = portal.CFrame * CFrame.new(0, 0, 0)
-        task.wait(1.2)
+    local target = loadstring("return " .. path)()
+    if not target then 
+        updateStatus("Ошибка пути")
+        return 
     end
     
-    -- Шаг 2: Телепорт на выбранное место
-    statusLabel.Text = "Телепорт..."
-    hrp.CFrame = target.CFrame * CFrame.new(0, 5, 0)
-    task.wait(0.3)
-    statusLabel.Text = "Готово!"
+    -- К порталу
+    updateStatus("🌀 Иду к порталу...")
+    local portal = workspace.Lobby:FindFirstChild("Teleport1")
+    if portal then
+        hrp.CFrame = portal.CFrame * CFrame.new(0,0,-8)
+        task.wait(1)
+        hrp.CFrame = portal.CFrame
+        task.wait(3) -- Увеличенная задержка до 4 секунд в сумме
+    end
+    
+    -- На остров
+    updateStatus("🚀 Телепорт...")
+    hrp.CFrame = target.CFrame * CFrame.new(0,15,0)
+    task.wait(0.5)
+    updateStatus("✅ Готово!")
     task.wait(1.5)
-    statusLabel.Text = ""
+    updateStatus("")
 end
 
-print("Телепорт загружен. Выбери локацию в GUI.")
+function updateStatus(msg)
+    local gui = plr.PlayerGui:FindFirstChild("TeleportGUI")
+    if gui then
+        local status = gui.Frame:FindFirstChild("StatusLabel")
+        if status then
+            status.Text = msg
+        end
+    end
+end
+
+-- ===== ЗАПУСК И ВОССТАНОВЛЕНИЕ ПОСЛЕ СМЕРТИ =====
+createGUI()
+
+plr.CharacterAdded:Connect(function(char)
+    task.wait(0.5)
+    createGUI()
+end)
+
+print("🌴 Teleport v2 загружен!")
