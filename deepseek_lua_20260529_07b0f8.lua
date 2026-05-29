@@ -1,10 +1,8 @@
--- Универсальный телепорт через портал Slap Battles v2
+-- Универсальный телепорт Slap Battles v3 (без портала)
 -- GitHub: MrErkin/teleport-slap-battels
 local plr = game.Players.LocalPlayer
 
--- Функция создания GUI (вызывается при старте и после смерти)
 local function createGUI()
-    -- Удаляем старый GUI если есть
     if plr.PlayerGui:FindFirstChild("TeleportGUI") then
         plr.PlayerGui.TeleportGUI:Destroy()
     end
@@ -20,13 +18,12 @@ local function createGUI()
 
     local title = Instance.new("TextLabel", f)
     title.Size = UDim2.new(1,0,0,25)
-    title.Text = "🌴 TELEPORT 🌴"
+    title.Text = "🌴 ТЕЛЕПОРТ 🌴"
     title.BackgroundColor3 = Color3.fromRGB(35,35,35)
     title.TextColor3 = Color3.fromRGB(255,255,255)
     title.Font = Enum.Font.SourceSansBold
     title.TextSize = 13
 
-    -- Острова
     local islands = {
         {name = "🏝️ Default", path = "workspace.Arena.island1"},
         {name = "👋 Slap", path = "workspace.Arena.island2"},
@@ -53,7 +50,6 @@ local function createGUI()
         y += 32
     end
 
-    -- Статус
     local status = Instance.new("TextLabel", f)
     status.Size = UDim2.new(1,0,0,15)
     status.Position = UDim2.new(0,0,0,y)
@@ -67,34 +63,22 @@ local function createGUI()
     f.Size = UDim2.new(0,200,0,y+20)
 end
 
--- ===== ТЕЛЕПОРТ =====
 function teleportTo(path)
     local char = plr.Character or plr.CharacterAdded:Wait()
     local hrp = char:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
     
     local target = loadstring("return " .. path)()
-    if not target then 
-        updateStatus("Ошибка пути")
-        return 
+    if not target then
+        updateStatus("❌ Ошибка пути")
+        return
     end
     
-    -- К порталу
-    updateStatus("🌀 Иду к порталу...")
-    local portal = workspace.Lobby:FindFirstChild("Teleport1")
-    if portal then
-        hrp.CFrame = portal.CFrame * CFrame.new(0,0,-8)
-        task.wait(1)
-        hrp.CFrame = portal.CFrame
-        task.wait(3) -- Увеличенная задержка до 4 секунд в сумме
-    end
-    
-    -- На остров
     updateStatus("🚀 Телепорт...")
-    hrp.CFrame = target.CFrame * CFrame.new(0,15,0)
-    task.wait(0.5)
+    hrp.CFrame = target.CFrame * CFrame.new(0, 10, 0)
+    task.wait(0.3)
     updateStatus("✅ Готово!")
-    task.wait(1.5)
+    task.wait(1)
     updateStatus("")
 end
 
@@ -108,12 +92,10 @@ function updateStatus(msg)
     end
 end
 
--- ===== ЗАПУСК И ВОССТАНОВЛЕНИЕ ПОСЛЕ СМЕРТИ =====
 createGUI()
-
-plr.CharacterAdded:Connect(function(char)
+plr.CharacterAdded:Connect(function()
     task.wait(0.5)
     createGUI()
 end)
 
-print("🌴 Teleport v2 загружен!")
+print("🌴 Teleport v3 загружен!")
